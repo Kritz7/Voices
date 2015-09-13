@@ -52,7 +52,7 @@ public class PlayerThoughtsInput : MonoBehaviour {
 		newButton.GetComponent<Button>().onClick.AddListener(() => Say(idea));
 	}
 
-	void SpawnSpeech(ThoughtManager.Idea i)
+	public void SpawnSpeech(ThoughtManager.Idea i)
 	{
 		if(currentSpeech)
 		{
@@ -62,6 +62,8 @@ public class PlayerThoughtsInput : MonoBehaviour {
 
 		currentSpeech = GameObject.Instantiate(SpeechPrefab, Player.player.transform.position + transform.up * 1f, Quaternion.identity) as GameObject;
 		Speech s = currentSpeech.GetComponent<Speech>();
+		currentSpeech.AddComponent<PlayerSpeech> ().idea = i;
+		currentSpeech.name = "Player's " + currentSpeech.name;
 
 		FollowObject follow = currentSpeech.AddComponent<FollowObject>();
 
@@ -70,7 +72,7 @@ public class PlayerThoughtsInput : MonoBehaviour {
 		follow.rotateSpeed = 0;
 		follow.moveSpeed = 5;
 
-		s.transform.GetChild(0).GetComponent<SpriteRenderer>().color = Player.player.GetComponent<Human>().Body.color;
+		s.transform.FindChild("Bubble").GetComponent<SpriteRenderer>().color = Player.player.GetComponent<Human>().Body.color;
 		
 		ThoughtManager.Idea ideaToUse = i;
 		Sprite spriteToUse = ideaToUse.sprite;

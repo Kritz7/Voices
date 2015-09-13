@@ -5,6 +5,8 @@ using System.Collections.Generic;
 public class Speech : MonoBehaviour {
 
 	List<GameObject> children = new List<GameObject>();
+	public bool dislike = false;
+	public ThoughtManager.Idea idea;
 
 	// Update is called once per frame
 	void Update ()
@@ -18,9 +20,7 @@ public class Speech : MonoBehaviour {
 			{
 				if(hit.transform.root.tag == "Topic")
 				{
-					Debug.Log("found one!");
-
-					InitChildSprites(hit.transform.gameObject);
+					GameObject.Find("PlayerThoughtInput").GetComponent<PlayerThoughtsInput>().SpawnSpeech(idea);
 				}
 			}
 		}
@@ -30,23 +30,24 @@ public class Speech : MonoBehaviour {
 	{
 		ClearAllChildren();
 
-		foreach(Sprite s in sprites)
-		{
-			GameObject g = new GameObject("Sprite-"+s.name,
+		foreach (Sprite s in sprites) {
+			GameObject g = new GameObject ("Sprite-" + s.name,
 			                              typeof(SpriteRenderer),
 			                              typeof(CoolAnimation));
 			g.transform.position = transform.position - transform.forward * 0.05f;
-			g.transform.SetParent(this.transform, true);
+			g.transform.SetParent (this.transform, true);
 
-			g.GetComponent<SpriteRenderer>().sprite = s;
-			g.GetComponent<SpriteRenderer>().color = color;
+			g.GetComponent<SpriteRenderer> ().sprite = s;
+			g.GetComponent<SpriteRenderer> ().color = color;
 
-			g.GetComponent<CoolAnimation>().Frequency = 0;
-			g.GetComponent<CoolAnimation>().RotationAxis = new Vector3(0,0,1);
-			g.GetComponent<CoolAnimation>().RotationSpeed = 20f;
+			g.GetComponent<CoolAnimation> ().Frequency = 0;
+			g.GetComponent<CoolAnimation> ().RotationAxis = new Vector3 (0, 0, 1);
+			g.GetComponent<CoolAnimation> ().RotationSpeed = 20f;
 
-			children.Add(g);
+			children.Add (g);
 		}
+
+		SetDislike ();
 	}
 
 	public void InitChildSprites(Sprite sprite, Color color)
@@ -67,6 +68,8 @@ public class Speech : MonoBehaviour {
 		g.GetComponent<CoolAnimation>().RotationSpeed = 20f;
 		
 		children.Add(g);
+
+		SetDislike ();
 	}
 
 	public void InitChildSprites(GameObject clone)
@@ -93,6 +96,23 @@ public class Speech : MonoBehaviour {
 				children.Add(g);
 			}
 		}
+
+		SetDislike ();
+	}
+
+	void SetDislike()
+	{
+		Transform dis = transform.root.FindChild ("Dislike");
+
+		SpriteRenderer sr = dis.GetComponent<SpriteRenderer>();
+
+		Color on = new Color (1, 0, 0, 1);
+		Color off = new Color (0, 0, 0, 0);
+
+		if (dislike)
+			sr.color = on;
+		else
+			sr.color = off;
 	}
 
 	void ClearAllChildren()

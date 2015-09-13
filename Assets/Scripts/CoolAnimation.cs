@@ -144,9 +144,6 @@ public class CoolAnimation : MonoBehaviour {
 				case LerpStyle.SuperSmooth:
 					completion = completion * completion * completion * (completion * (6f * completion - 15f) + 10f);
 					break;
-				default:
-					completion = completion;
-					break;
 				}
 				
 				transform.localPosition = Vector3.Lerp(startPos, EndPos, completion);

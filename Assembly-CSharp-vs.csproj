@@ -52,6 +52,7 @@
      <Compile Include="Assets\Scripts\Human.cs" />
      <Compile Include="Assets\Scripts\MouseInput.cs" />
      <Compile Include="Assets\Scripts\Player.cs" />
+     <Compile Include="Assets\Scripts\PlayerSpeech.cs" />
      <Compile Include="Assets\Scripts\PlayerThoughtsInput.cs" />
      <Compile Include="Assets\Scripts\Speech.cs" />
      <Compile Include="Assets\Scripts\ThoughtManager.cs" />

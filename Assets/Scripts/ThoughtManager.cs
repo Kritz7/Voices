@@ -17,6 +17,7 @@ public class ThoughtManager : MonoBehaviour
 		public int id;
 		public Sprite sprite;
 		public Color color;
+		public float starsign;
 	}
 	public List<Idea> Ideas = new List<Idea>();
 
@@ -31,10 +32,14 @@ public class ThoughtManager : MonoBehaviour
 
 	void InitIdeas()
 	{
+		float randStarOffset = Random.Range (0, Ideas.Count);
+
+
 		for(int i=0; i<Ideas.Count; i++)
 		{
 			Ideas[i].color = RandColour();
 			Ideas[i].id = i;
+			Ideas[i].starsign = ((i+randStarOffset)%Ideas.Count)/Ideas.Count;
 		}
 
 		List<Idea> ideaclone = new List<Idea>(Ideas);

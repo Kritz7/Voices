@@ -10,17 +10,27 @@ public class AI : MonoBehaviour {
 	private Vector3 startPos;
 	private float direction = 1;
 
+	public float Starsign;
+	public float starsignDiff = 0.4f;
+
+	public float happiness = 0;
+
 	public bool IsSpeaking = false;
 	bool delayingSpeaking = false;
 	List<AI> nearbyAI = new List<AI>();
 
-	public List<Sprite> conversations = new List<Sprite>();
 	public GameObject speechPrefab;
 	GameObject currentSpeech;
+
+	public GameObject HappyPrefab;
+	public GameObject AngryPrefab;
+	GameObject currentOpinion;
 
 	public Thoughts thoughts;
 
 	Color ideaColor;
+
+	bool followingPlayer = false;
 
 	// Use this for initialization
 	void Start () 
@@ -61,9 +71,16 @@ public class AI : MonoBehaviour {
 		currentSpeech = GameObject.Instantiate(speechPrefab, transform.position + transform.up * 1f, Quaternion.identity) as GameObject;
 		Speech s = currentSpeech.GetComponent<Speech>();
 		
-		s.transform.GetChild(0).GetComponent<SpriteRenderer>().color = GetComponent<Human>().Body.color;
+		s.transform.FindChild("Bubble").GetComponent<SpriteRenderer>().color = GetComponent<Human>().Body.color;
+
 
 		ThoughtManager.Idea ideaToUse = thoughts.Ideas[Random.Range(0, thoughts.Ideas.Count)];
+
+		if (IsThisABadIdea (ideaToUse))
+			s.dislike = true;
+
+		s.idea = ideaToUse;
+
 		Sprite spriteToUse = ideaToUse.sprite;
 		Color colorToUse = Color.Lerp(ideaToUse.color, ideaColor, Random.Range(0.1f, 0.6f));
 		colorToUse = Color.Lerp(colorToUse, Color.white, 0.4f);
@@ -91,7 +108,7 @@ public class AI : MonoBehaviour {
 		{
 			Destroy(currentSpeech);
 			currentSpeech = null;
-		}
+		}	
 
 		IsSpeaking = false;
 
@@ -112,6 +129,99 @@ public class AI : MonoBehaviour {
 		}
 	}
 
+	public void ThinkAbout(ThoughtManager.Idea idea)
+	{
+		if (!thoughts.Ideas.Contains (idea)) {
+			thoughts.AddThought(idea);
+		}
+
+		if (IsThisAGoodIdea(idea)) {
+
+			float happinessAdd = (1 - Mathf.Abs(Starsign - idea.starsign)) * 0.5f;
+
+			thoughts.GoodIdeas.Add(idea);
+			UpdateOpinion(happinessAdd);
+		}
+
+		if (IsThisABadIdea(idea)) {
+
+			float angryAdd = Mathf.Abs(Starsign - idea.starsign) * 0.5f;
+
+			thoughts.BadIdeas.Add(idea);
+			UpdateOpinion(-angryAdd);
+		}
+	}
+
+	void UpdateOpinion(float add)
+	{
+		Debug.Log ("prev: " + happiness + ", " + add);
+		happiness = Mathf.Clamp(happiness+add, -1, 1);
+		Debug.Log ("Curr: " + happiness);
+
+		if (Mathf.Abs (happiness) > 0.25f) {
+			if (happiness < 0)
+				SpawnOpinion (AngryPrefab);
+			else
+				SpawnOpinion (HappyPrefab);
+		} else if(currentOpinion!=null)
+		{
+			currentOpinion.transform.localScale = new Vector3(happiness, happiness, happiness);
+		}
+
+		foreach (CoolAnimation cool in GetComponentsInChildren<CoolAnimation>())
+		{
+			cool.MoveSpeed *= Mathf.Abs(happiness);
+		}
+
+		
+		if (happiness > 0.6f && !followingPlayer)
+		{
+			followingPlayer = true;
+			StartCoroutine("FollowPlayer");	
+		}
+	}
+
+	IEnumerator FollowPlayer()
+	{
+		while (happiness > 0.4f) {
+
+			float randDist = Random.Range(0.2f, 0.8f);
+		//	if(Random.value>0.5f) randDist = -randDist;
+
+			startPos = GameObject.Find("Player").transform.position;
+
+			yield return new WaitForSeconds(Random.Range(0.6f, 2f));
+		}
+
+		followingPlayer = false;
+	}
+
+	bool IsThisAGoodIdea(ThoughtManager.Idea idea)
+	{
+		return thoughts.GoodIdeas.Contains (idea);
+	}
+
+	bool IsThisABadIdea(ThoughtManager.Idea idea)
+	{
+		return thoughts.BadIdeas.Contains (idea);
+	}
+
+	void SpawnOpinion(GameObject prefab)
+	{
+		if (currentOpinion != null) {
+			GameObject.Destroy(currentOpinion);
+			currentOpinion = null;
+		}
+
+		GameObject newOpinionObj = GameObject.Instantiate (prefab, transform.position, Quaternion.identity) as GameObject;
+		newOpinionObj.transform.localScale = new Vector3 (happiness, happiness, happiness);
+
+		FollowObject newOpinionFollow = newOpinionObj.GetComponent<FollowObject> ();
+		newOpinionFollow.follow = this.gameObject;
+
+		currentOpinion = newOpinionObj;
+	}
+
 	void PropogateIdeas()
 	{
 		FindNearbyAI();
@@ -120,7 +230,19 @@ public class AI : MonoBehaviour {
 		{
 			foreach(ThoughtManager.Idea idea in thoughts.Ideas)
 			{
-				if(!ai.thoughts.Ideas.Contains(idea)) ai.thoughts.Ideas.Add(idea);
+				if(!ai.thoughts.Ideas.Contains(idea))
+				{
+					ai.thoughts.Ideas.Add(idea);
+
+					if(Mathf.Abs(idea.starsign - Starsign)<starsignDiff)
+					{
+						ai.thoughts.GoodIdeas.Add(idea);
+					}
+					else// if((1-Mathf.Abs(idea.starsign - Starsign))<starsignDiff)
+					{
+						ai.thoughts.BadIdeas.Add(idea);
+					}
+				}
 			}
 		}
 	}
@@ -142,6 +264,7 @@ public class AI : MonoBehaviour {
 	{
 		ideaColor = RandColour();
 		thoughts = GetComponent<Thoughts>();
+		Starsign = Random.value;
 
 		startPos = transform.position;
 		
